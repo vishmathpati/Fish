@@ -1,0 +1,141 @@
+{
+  "$comment": "Curated shadcn-compatible component registries. NONE are added by default. The setup script walks through each one and asks the user to opt in. All URLs below were verified against each library's official docs on 2026-04-21.",
+  "foundation": {
+    "$comment": "Always installed when missing. Not registries — the base shadcn CLI + two taste/motion skills.",
+    "shadcn": {
+      "required": true,
+      "kind": "cli",
+      "install": "npx shadcn@latest init"
+    },
+    "ui-ux-pro-max": {
+      "required": true,
+      "kind": "skill",
+      "install": "npm install -g uipro-cli && uipro init --ai claude",
+      "notes": "Design brain — 161 rules, 67 UI styles, 161 palettes, 57 font pairings. Runs before shadcn MCP to produce requirements briefs in plain design language."
+    },
+    "emil-motion": {
+      "required": true,
+      "kind": "skill",
+      "install": "npx skills add emilkowalski/skill",
+      "notes": "Motion/interaction refinement. Invoked only when requirements contain motion cues."
+    }
+  },
+  "optional": {
+    "$comment": "Full catalog of shadcn-compatible registries. None installed by default — user picks per project. All URLs verified against official docs.",
+    "@magicui": {
+      "name": "Magic UI",
+      "kind": "registry",
+      "url": "https://magicui.design/r/{name}.json",
+      "mcp": {
+        "command": "npx",
+        "args": ["--yes", "@magicuidesign/mcp@latest"]
+      },
+      "best_for": "Animated / marketing components — animated beam, marquee, orbiting icons, particle background, gradient blob, icon cloud, bento grid, word rotator, spotlight, browser frame.",
+      "install_hint": "npx shadcn@latest add @magicui/<component-name>",
+      "source": "https://magicui.design"
+    },
+    "@aceternity": {
+      "name": "Aceternity UI",
+      "kind": "registry",
+      "url": "https://ui.aceternity.com/registry/{name}.json",
+      "best_for": "Motion-heavy hero sections, 3D cards, infinite scroll, timeline, sparkle effects, animated lists.",
+      "install_hint": "npx shadcn@latest add @aceternity/<component-name>",
+      "source": "https://ui.aceternity.com/docs/cli",
+      "notes": "Some components require extra deps (framer-motion, three.js). shadcn CLI prompts at add time."
+    },
+    "@reui": {
+      "name": "REUI",
+      "kind": "registry",
+      "url": "https://reui.io/r/default/{name}.json",
+      "best_for": "Composable primitives + data-table / form patterns with strong defaults.",
+      "install_hint": "npx shadcn@latest add @reui/<component-name>",
+      "source": "https://reui.io/docs/registry",
+      "notes": "REUI URLs take a style segment ('default' is the main one). If a component is published under a different style, change 'default' in the URL accordingly."
+    },
+    "@smoothui": {
+      "name": "SmoothUI",
+      "kind": "registry",
+      "url": "https://smoothui.dev/r/{name}.json",
+      "best_for": "Polished micro-interactions, card hover states, buttons with built-in motion.",
+      "install_hint": "npx shadcn@latest add @smoothui/<component-name>",
+      "source": "https://smoothui.dev"
+    },
+    "@unlumen": {
+      "name": "Unlumen UI",
+      "kind": "registry",
+      "url": "https://ui.unlumen.com/r/{name}.json",
+      "best_for": "Luminous, typography-forward marketing components.",
+      "install_hint": "npx shadcn@latest add @unlumen/<component-name>",
+      "source": "https://ui.unlumen.com"
+    },
+    "@cardcn": {
+      "name": "Cardcn",
+      "kind": "registry",
+      "url": "https://github.com/Ali-Hussein-dev/cardcn/raw/main/public/r/{name}.json",
+      "best_for": "Card-focused compositions — stat cards, feature cards, testimonial cards, pricing cards.",
+      "install_hint": "npx shadcn@latest add @cardcn/<component-name>",
+      "source": "https://github.com/Ali-Hussein-dev/cardcn",
+      "notes": "No official registry docs — URL points at the GitHub raw file path inside the repo."
+    },
+    "@shadcnstudio": {
+      "name": "ShadcnStudio",
+      "kind": "registry",
+      "url": "https://shadcnstudio.com/r/{name}.json",
+      "best_for": "700+ visual-composer blocks built on shadcn base — landing pages, dashboards, full-section compositions.",
+      "install_hint": "npx shadcn@latest add @shadcnstudio/<component-name>",
+      "source": "https://shadcnstudio.com",
+      "notes": "ShadcnStudio also ships an MCP server — the setup script will prompt for its install command if you opt in."
+    },
+    "@efferd": {
+      "name": "Efferd",
+      "kind": "registry",
+      "url": "https://efferd.com/r/{name}.json",
+      "best_for": "Community-submitted shadcn registry — eclectic mix of components.",
+      "install_hint": "npx shadcn@latest add @efferd/<component-name>",
+      "source": "https://efferd.com"
+    },
+    "@cultui": {
+      "name": "Cult UI",
+      "kind": "registry",
+      "url": "https://cult-ui.com/r/{name}.json",
+      "mcp": {
+        "command": "npx",
+        "args": ["--yes", "@cult-ui/mcp@latest"],
+        "url_docs": "https://www.cult-ui.com/docs/mcp-server"
+      },
+      "best_for": "Opinionated, trend-forward components — bento grids, glass cards, novel patterns.",
+      "install_hint": "npx shadcn@latest add @cultui/<component-name>",
+      "source": "https://www.cult-ui.com/docs/installation",
+      "notes": "MCP package name is a best guess — confirm at the docs URL before opt-in. Setup script will warn if the MCP install fails."
+    },
+    "@kokonut": {
+      "name": "Kokonut UI",
+      "kind": "registry",
+      "url": "https://kokonutui.com/r/{name}.json",
+      "best_for": "Polished micro-interactions, buttons, badges, form fields with built-in animation.",
+      "install_hint": "npx shadcn@latest add @kokonut/<component-name>",
+      "source": "https://kokonutui.com/docs",
+      "notes": "Note: kokonutui.com (no hyphen), not kokonut-ui.com."
+    },
+    "@tremor": {
+      "name": "Tremor",
+      "kind": "npm-package",
+      "url": "",
+      "status": "no_shadcn_registry",
+      "best_for": "Data dashboards — charts, KPI cards, sparklines, filtered tables.",
+      "install_hint": "npm install @tremor/react   (then import components directly — NOT a shadcn registry)",
+      "source": "https://tremor.so",
+      "notes": "Tremor is an npm package, not a shadcn registry. shadcn MCP cannot search it. The setup script will flag this clearly and skip the components.json merge. Listed here because it's still a great charts/dashboard library — you just install it the traditional npm way."
+    }
+  },
+  "components_json_template": {
+    "$comment": "The registries block merged into the project's components.json when a user opts in. Only opted-in entries with a real URL are written.",
+    "example": {
+      "registries": {
+        "@magicui": "https://magicui.design/r/{name}.json"
+      }
+    }
+  },
+  "version": "1.2",
+  "updated": "2026-04-21"
+}
