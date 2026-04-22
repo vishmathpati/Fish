@@ -136,6 +136,172 @@
       }
     }
   },
-  "version": "1.2",
-  "updated": "2026-04-21"
+  "compatibility_profiles": {
+    "$comment": "Per-project registry compatibility overrides. Read by ui-workflow skill at Phase 3 Step 3 to auto-filter incompatible registries before search. Key = project identifier (matches project root folder name). Each entry defines which registries are allowed, their compatibility verdict, and for SELECTIVE registries, the specific components that pass the filter.",
+    "arel-dashboard": {
+      "$comment": "Arel OS Dashboard — Notion-minimal aesthetic. Forbidden: gradients on chrome, glassmorphism, backdrop-blur (without functional reason), cinematic/parallax effects, infinite animations on primary content. Reference: DESIGN-SYSTEM.md + COMPONENT-CATALOG-FILTERED.md",
+      "catalog_file": "COMPONENT-CATALOG-FILTERED.md",
+      "design_rules_file": "DESIGN-SYSTEM.md",
+      "registries": {
+        "@shadcn": {
+          "verdict": "PRIMARY",
+          "search": "all",
+          "notes": "Neutral baseline primitives. Always the default source. Use for every fundamental component."
+        },
+        "@reui": {
+          "verdict": "EXTEND",
+          "search": "all",
+          "notes": "Extended shadcn. Same philosophy, 1003+ variants. Use when @shadcn doesn't cover a need: DataGrid, Kanban, Stepper, Filters, Sortable, Tree, Autocomplete, Phone Input, Number Field, Rating, Timeline."
+        },
+        "@shadcnstudio": {
+          "verdict": "STYLE_REFERENCE",
+          "search": "all",
+          "notes": "Visual variant presets over shadcn primitives. Cherry-pick specific variant configurations — not a runtime dependency to add wholesale."
+        },
+        "@smoothui": {
+          "verdict": "SELECTIVE",
+          "search": "allowed_only",
+          "allowed": [
+            "motion-accordion",
+            "animated-stepper",
+            "animated-otp-input",
+            "animated-file-upload",
+            "animated-progress-bar",
+            "animated-toggle",
+            "animated-tabs",
+            "animated-input",
+            "basic-modal",
+            "basic-dropdown",
+            "basic-toast",
+            "basic-dropdown",
+            "context-menu",
+            "dialog",
+            "drawer",
+            "dropdown-menu",
+            "form",
+            "checkbox",
+            "combobox",
+            "select",
+            "skeleton",
+            "accordion",
+            "breadcrumb",
+            "pagination",
+            "smooth-button",
+            "button-copy",
+            "dynamic-island",
+            "expandable-cards",
+            "infinite-slider",
+            "number-flow",
+            "animate-digits",
+            "notification-badge",
+            "contribution-graph",
+            "ai-input",
+            "ai-chat",
+            "ai-branch",
+            "product-card",
+            "scrollable-card-stack",
+            "animated-avatar-group",
+            "gooey-popover",
+            "rich-popover"
+          ],
+          "drop_reason": "Drop: all text animations (Typewriter, Reveal Text, Scramble, Wave Text, etc.), all background effects (Gravity Stars, Aurora Bars, Wave Background, Pixel Background), Siri Orb, Aurora Card, Blob Card, Cursor Follow, marketing blocks. Reason: violate chrome-disappears principle or introduce locked decorative aesthetics."
+        },
+        "@cultui": {
+          "verdict": "SELECTIVE",
+          "search": "allowed_only",
+          "allowed": [
+            "direction-aware-tabs",
+            "sortable-list",
+            "color-picker",
+            "side-panel",
+            "floating-panel",
+            "popover",
+            "popover-form",
+            "family-drawer",
+            "code-block",
+            "toolbar-expandable",
+            "hover-video-player",
+            "minimal-card",
+            "expandable-card",
+            "copy-button",
+            "dynamic-island",
+            "choice-poll",
+            "vote-tally",
+            "timer",
+            "prompt-library",
+            "ai-instructions"
+          ],
+          "drop_reason": "Drop: all Hero variants (Dithering, Color Panels, Heatmap, Liquid Metal), Neumorph/Cosmic/Gradient/Border Beam buttons, Logo Carousel, Tweet Grid, all visual effects (Grid Beam, Fractal Grid, LightBoard, SVG Shapes, Shader Lens Blur), 3D Carousel, Distorted Glass, all text animations, Background Texture, Neumorph Eyebrow. Reason: opinionated marketing aesthetics, gradient rule violations, or glassmorphism."
+        },
+        "@kokonut": {
+          "verdict": "SELECTIVE",
+          "search": "allowed_only",
+          "allowed": [
+            "ai-input-selector",
+            "ai-input-search",
+            "ai-voice",
+            "ai-state-loading",
+            "ai-text-loading",
+            "action-search-bar",
+            "smooth-tab",
+            "file-upload",
+            "avatar-picker",
+            "team-selector",
+            "loader",
+            "profile-dropdown"
+          ],
+          "drop_reason": "Drop: all animated backgrounds (Beams Background, Background Paths, Flow Field, Shapes Hero), Liquid Glass (glassmorphism), all gradient buttons (Gradient Button, Magnet Button, Particle Button), all text animations (Scroll Text, Typing Text, Matrix Text, Glitch Text, Shimmer Text, Sliced Text, Swoosh Text), Morphic Navbar, Carousel Cards, Bento Grid, spotlight cards, mouse effect card, currency transfer card. Reason: glassmorphism, gradient rule violations, or locked decorative aesthetics."
+        },
+        "@unlumen": {
+          "verdict": "SELECTIVE",
+          "search": "allowed_only",
+          "allowed": [
+            "kbd",
+            "slider",
+            "switch",
+            "progressive-blur",
+            "tooltip-preview",
+            "floating-tooltip",
+            "theme-switch",
+            "command-menu",
+            "copy-button",
+            "refresh-button"
+          ],
+          "drop_reason": "Drop: Shimmer Skeleton (use @shadcn Skeleton instead), Glowing Badge (decorative glow), Scramble Text, Shimmering Text, Text Reveal, Velocity Highlight, Count Up (use @smoothui Number Flow instead), Cursor (decorative cursor replacement), Glow Button (glow effect), Magnetic Button (motion gimmick), Orbiting Skills (marketing animation), Pixel Background, Tilt Card, Tilt. Reason: decorative effects that violate chrome-disappears principle."
+        },
+        "@magicui": {
+          "verdict": "SELECTIVE",
+          "search": "allowed_only",
+          "allowed": [
+            "marquee",
+            "file-tree",
+            "code-comparison",
+            "dot-pattern",
+            "grid-pattern",
+            "border-beam",
+            "animated-beam",
+            "progressive-blur"
+          ],
+          "drop_reason": "Drop: ALL text animations (Text Animate, Typing Animation, Number Ticker, Animated Shiny Text, Animated Gradient Text, Text Reveal, Hyper Text, Word Rotate, Morphing Text, Spinning Text, Sparkles Text, Aurora Text, Line Shadow Text, Video Text, Text Highlighter, Text 3D Flip, Scroll Based Velocity, Blur Fade), ALL backgrounds (Flickering Grid, Animated Grid Pattern, Retro Grid, Ripple, Hexagon Pattern, Striped Pattern, Interactive Grid Pattern, Light Rays, Noise Texture, Warp Background), ALL decorative effects (Meteors, Particles, Confetti, Shine Border, Magic Card, Glare Hover), ALL buttons (Rainbow, Shimmer, Ripple, Shiny, Pulsating, Interactive Hover), Globe, World Map, Device Mocks (Safari/iPhone/Android), Tweet Card, Bento Grid, Avatar Circles, Orbiting Circles, Icon Cloud, Animated Theme Toggler, Smooth Cursor, Backlight, Cool Mode, Neon Gradient Card, Animated Circular Progress Bar, Pixel Image, Comic Text, Scroll Progress, Pointer. Reason: decorative animations, locked visual aesthetics incompatible with Notion-minimal, or gradient rule violations."
+        },
+        "@aceternity": {
+          "verdict": "DROP",
+          "search": "none",
+          "drop_reason": "Almost entirely incompatible with Arel OS design system. Heavy parallax, 3D transforms, glassmorphism overtones, cinematic motion, chromatic gradients — all violate Notion-minimal + no-glassmorphism + no-chromatic-gradient rules. Possibly evaluate Code Block and Timeline on a per-case basis only if explicitly requested by Vish, not as a default search target."
+        },
+        "@cardcn": {
+          "verdict": "DEPRIORITIZE",
+          "search": "last_resort",
+          "drop_reason": "Most card categories are WIP or planned. Very limited scope (cards only). Check last. Only relevant if a card-specific surface has a concrete need that @shadcn Card + custom composition can't cover."
+        },
+        "@efferd": {
+          "verdict": "DROP",
+          "search": "none",
+          "drop_reason": "Marketing blocks ONLY. Zero individual component primitives. All 141 blocks (Auth, Hero, Features, Pricing, Header, Footer, CTA, Testimonials, Integrations, Logo Cloud, FAQs, Contact) are SaaS landing-page sections with no applicability to a productivity dashboard."
+        }
+      }
+    }
+  },
+  "version": "1.3",
+  "updated": "2026-04-22"
 }

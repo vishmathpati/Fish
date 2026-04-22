@@ -30,6 +30,8 @@ Silently verify the following, in this order:
 7. `DESIGN-SYSTEM.md` at project root
 8. `DESIGN-PLAN.md` at project root (optional — only for full-site projects)
 9. `DISCOVERIES.md` at project root (optional — user-maintained)
+10. `COMPONENT-CATALOG-FILTERED.md` at project root (optional — registry compatibility filter; if present, Step 3 will use it to auto-filter incompatible registries and components)
+11. `COMPONENT-CATALOG-FULL.md` at project root (optional — full inventory reference; read-only reference, not used for filtering)
 
 **If anything in steps 1, 4–7 is missing:** do not auto-install. Tell the user which pieces are missing and ask them to run the Fish setup script (`~/.fish/scripts/setup-design-system.sh`, or re-run the install one-liner from the Fish README). Pause.
 
@@ -90,10 +92,42 @@ Scan Pro Max's requirements for motion cues:
 
 Mark each requirement: `motion: yes` or `motion: no`.
 
-### Step 3 — shadcn MCP search
-For each requirement, query shadcn MCP using Pro Max's description as the natural-language query. The MCP searches across **every registry registered in `components.json`** — so whichever of Magic UI, Aceternity, REUI, SmoothUI, Unlumen, Cardcn, ShadcnStudio, Efferd, Cult UI, or Kokonut the user has opted into are all searched as one unified pool. (Tremor is npm-only and not searchable through shadcn MCP — see the registries catalog.)
+### Step 3 — Registry compatibility filter + shadcn MCP search
 
-Collect 3-5 candidates per requirement. Always include the registry namespace (e.g., `@shadcnstudio/pricing-three-tier`, `@cultui/bento-grid`, `@magicui/animated-beam`).
+**Sub-step 3a — Load compatibility profile (run once per session)**
+
+Before searching, check whether a compatibility profile exists for this project:
+
+1. Look for `~/.fish/config/registries.json` → read the `compatibility_profiles` block.
+2. Match the current project by folder name (e.g., `arel-dashboard`).
+3. If a profile is found, load it. If not, default to searching all registered registries (no filter).
+4. Also check for `COMPONENT-CATALOG-FILTERED.md` at project root. If present, it is the ground truth for filtered decisions — surface it to the approval gate as context.
+
+**Sub-step 3b — Build the active registry list**
+
+From the loaded profile, classify registries into three tiers:
+
+| Tier | Verdict values | Search behavior |
+|------|---------------|-----------------|
+| **Search freely** | `PRIMARY`, `EXTEND`, `STYLE_REFERENCE` | Include in all searches with no restrictions |
+| **Search selectively** | `SELECTIVE` | Include in search but constrain to the `allowed` component list only. Do not surface components outside that list even if they match. |
+| **Do not search** | `DROP`, `DEPRIORITIZE` | Exclude entirely from this search. `DEPRIORITIZE` may be queried as a last resort only if no result found in higher tiers. |
+
+Print the active registry list at the start of the approval gate so the user can see what was searched and what was filtered out.
+
+**Sub-step 3c — Execute filtered search**
+
+Query shadcn MCP using Pro Max's description as the natural-language query, constrained to the active registry list from 3b.
+
+- For `SELECTIVE` registries: after retrieving results, discard any component whose name is not in the `allowed` list for that registry. Surface only allowed matches.
+- If a `SELECTIVE` registry returns no allowed matches, state "no compatible match in @registry" — do not fall back to a disallowed component from that registry.
+- If `DROP` registries would have relevant components, note them as "filtered out — incompatible design philosophy" in the approval gate. Do not offer them as options. The user may override by explicitly naming a registry, but Fish does not proactively suggest filtered items.
+
+Collect 3-5 candidates per requirement across the unfiltered + selectively-filtered pool. Always include the registry namespace (e.g., `@reui/stepper`, `@cultui/direction-aware-tabs`, `@smoothui/motion-accordion`).
+
+**Sub-step 3d — Flag any result from a SELECTIVE registry**
+
+When a candidate comes from a `SELECTIVE` registry (not PRIMARY/EXTEND), append a note in the approval gate: `[selective — allowed per COMPONENT-CATALOG-FILTERED.md]`. This keeps the user aware of what's been approved vs. what's the open pool.
 
 ### Step 4 — DISCOVERIES.md scan
 If `DISCOVERIES.md` exists, scan it for entries whose `Fits:` line matches the current requirement. Add any matches as additional candidates, labeled `[from DISCOVERIES.md]`.
@@ -105,6 +139,7 @@ Print a consolidated plan exactly in this format:
 Request: [user's original request, restated]
 Mode: Type [A | B | C]
 Design system: DESIGN-SYSTEM.md loaded
+Registry filter: [active profile name, e.g. "arel-dashboard"] | Searching: [@shadcn @reui @shadcnstudio + selective: @smoothui @cultui @kokonut @unlumen @magicui] | Excluded: [@aceternity @efferd]
 
 Pro Max requirements:
   1. [requirement in plain design language]
