@@ -87,9 +87,16 @@ command -v uipro >/dev/null 2>&1 && HAS_PRO_MAX=1
 [ -d "$HOME/.claude/skills/ui-ux-pro-max" ] && HAS_PRO_MAX=1
 
 HAS_EMIL=0
+# Emil can land in a handful of places depending on which installer the user
+# picked. Check all of them — the installer default is .agents/skills/ (project
+# scope), but global ~/.claude/skills/ and local .claude/skills/ are also valid.
 [ -d "$HOME/.claude/skills/emil-motion" ] && HAS_EMIL=1
 [ -d "$HOME/.claude/skills/emil-kowalski" ] && HAS_EMIL=1
+[ -d "$HOME/.claude/skills/emil-design-eng" ] && HAS_EMIL=1
 ls "$HOME/.claude/skills/" 2>/dev/null | grep -qi emil && HAS_EMIL=1
+# Project-scope installs from skills.sh land under .agents/ or .claude/
+ls "./.agents/skills/" 2>/dev/null | grep -qi emil && HAS_EMIL=1
+ls "./.claude/skills/" 2>/dev/null | grep -qi emil && HAS_EMIL=1
 
 [ "$HAS_COMPONENTS_JSON" = "1" ] && ok "shadcn initialized (components.json present)" || miss "shadcn not initialized"
 [ "$HAS_PRO_MAX"         = "1" ] && ok "UI/UX Pro Max installed"                        || miss "UI/UX Pro Max missing"
@@ -140,8 +147,11 @@ say ""
 # shellcheck disable=SC2016
 OPT_KEYS=$(jq -r '.optional | keys[]' "$REGISTRIES_CONFIG")
 
-declare -a SELECTED_REGISTRIES=()
-declare -A SELECTED_URLS
+# NOTE: macOS ships Bash 3.2 — associative arrays (declare -A) don't exist.
+# We use two parallel indexed arrays instead. SELECTED_KEYS[i] and
+# SELECTED_URLS[i] describe the same registry.
+SELECTED_KEYS=()
+SELECTED_URLS=()
 while IFS= read -r key; do
   name=$(jq   -r --arg k "$key" '.optional[$k].name'            "$REGISTRIES_CONFIG")
   url=$(jq    -r --arg k "$key" '.optional[$k].url'             "$REGISTRIES_CONFIG")
@@ -166,19 +176,20 @@ while IFS= read -r key; do
 
   if ask "    Add ${key}?" n; then
     [ -n "$notes" ] && say "    ${DIM}${notes}${RESET}"
-    SELECTED_REGISTRIES+=("$key")
-    SELECTED_URLS[$key]="$url"
+    SELECTED_KEYS+=("$key")
+    SELECTED_URLS+=("$url")
   fi
 done <<<"$OPT_KEYS"
 
 # Merge selected registries into components.json
-if [ ${#SELECTED_REGISTRIES[@]} -gt 0 ]; then
+if [ ${#SELECTED_KEYS[@]} -gt 0 ]; then
   say ""
-  ok "Merging ${#SELECTED_REGISTRIES[@]} registries into components.json"
+  ok "Merging ${#SELECTED_KEYS[@]} registries into components.json"
   TMP=$(mktemp)
   cp components.json "$TMP"
-  for key in "${SELECTED_REGISTRIES[@]}"; do
-    url="${SELECTED_URLS[$key]}"
+  for i in "${!SELECTED_KEYS[@]}"; do
+    key="${SELECTED_KEYS[$i]}"
+    url="${SELECTED_URLS[$i]}"
     jq --arg k "$key" --arg u "$url" \
        '.registries = (.registries // {}) | .registries[$k] = $u' \
        "$TMP" > "$TMP.new" && mv "$TMP.new" "$TMP"

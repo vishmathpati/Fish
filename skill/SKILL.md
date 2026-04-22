@@ -25,7 +25,7 @@ Silently verify the following, in this order:
 2. shadcn MCP registered (check `.mcp.json` or equivalent)
 3. shadcn skill present (`.claude/skills/shadcn/` or similar)
 4. UI/UX Pro Max skill present (`.claude/skills/ui-ux-pro-max/` or `which uipro`)
-5. Emil Kowalski skill present (`.claude/skills/emil-*/`)
+5. Emil Kowalski skill present (any of: `~/.claude/skills/emil-*/`, `.claude/skills/emil-*/`, `.agents/skills/emil-*/`)
 6. `DESIGN-SYSTEM.md` at project root
 7. `DESIGN-PLAN.md` at project root (optional — only for full-site projects)
 8. `DISCOVERIES.md` at project root (optional — user-maintained)
