@@ -26,13 +26,13 @@ everything downstream sane:
 From inside your project root:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<your-handle>/Fish/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/vishmathpati/Fish/main/install.sh | bash
 ```
 
 Or if you'd rather clone:
 
 ```bash
-git clone https://github.com/<your-handle>/Fish.git ~/.fish
+git clone https://github.com/vishmathpati/Fish.git ~/.fish
 bash ~/.fish/scripts/setup-design-system.sh
 ```
 
