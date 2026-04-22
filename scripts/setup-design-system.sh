@@ -270,10 +270,8 @@ printf '  %-35s %s\n' "Framework"            "$FRAMEWORK"
 printf '  %-35s %s\n' "components.json"      "$([ "$HAS_COMPONENTS_JSON" = "1" ] && echo yes || echo no)"
 printf '  %-35s %s\n' "UI/UX Pro Max"        "$([ "$HAS_PRO_MAX" = "1" ] && echo yes || echo no)"
 printf '  %-35s %s\n' "Emil motion skill"    "$([ "$HAS_EMIL" = "1" ] && echo yes || echo no)"
-SELECTED_COUNT=${#SELECTED_KEYS[@]+${#SELECTED_KEYS[@]}}
-SELECTED_COUNT=${SELECTED_COUNT:-0}
-printf '  %-35s %s\n' "Registries selected"  "$SELECTED_COUNT"
-[ "$SELECTED_COUNT" -gt 0 ] && printf '  %-35s %s\n' "  - namespaces"          "${SELECTED_KEYS[*]}"
+printf '  %-35s %s\n' "Registries selected"  "${#SELECTED_KEYS[@]}"
+[ "${#SELECTED_KEYS[@]}" -gt 0 ] && printf '  %-35s %s\n' "  - namespaces"          "${SELECTED_KEYS[*]}"
 printf '  %-35s %s\n' "ui-workflow skill"    ".claude/skills/ui-workflow/SKILL.md"
 printf '  %-35s %s\n' "design-review agent"  ".claude/agents/design-review.md"
 printf '  %-35s %s\n' "Templates placed"     "DESIGN-SYSTEM.template.md, DESIGN-PLAN.template.md, DISCOVERIES.template.md"
