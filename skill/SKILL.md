@@ -22,17 +22,38 @@ You are the single entry point for every UI/design request across every project.
 Silently verify the following, in this order:
 
 1. `components.json` at project root (shadcn initialized)
-2. shadcn MCP registered (check `.mcp.json` or equivalent)
-3. shadcn skill present (`.claude/skills/shadcn/` or similar)
-4. UI/UX Pro Max skill present (`.claude/skills/ui-ux-pro-max/` or `which uipro`)
-5. Emil Kowalski skill present (any of: `~/.claude/skills/emil-*/`, `.claude/skills/emil-*/`, `.agents/skills/emil-*/`)
-6. `DESIGN-SYSTEM.md` at project root
-7. `DESIGN-PLAN.md` at project root (optional — only for full-site projects)
-8. `DISCOVERIES.md` at project root (optional — user-maintained)
+2. **shadcn MCP registered on disk** — check `<repo>/.mcp.json`, `~/.claude.json` (top-level `mcpServers` key), and the Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS; `~/.config/Claude/claude_desktop_config.json` on Linux). Presence in any ONE of these is enough to pass this step.
+3. **shadcn MCP accessible at runtime** — check whether `mcp__shadcn__*` tools are actually available in your own tool list right now. File presence (step 2) is not enough: an MCP that's registered in project scope won't load in Cowork, and vice versa. Step 3 is the ground truth.
+4. shadcn skill present (`.claude/skills/shadcn/` or similar)
+5. UI/UX Pro Max skill present (`.claude/skills/ui-ux-pro-max/` or `which uipro`)
+6. Emil Kowalski skill present (any of: `~/.claude/skills/emil-*/`, `.claude/skills/emil-*/`, `.agents/skills/emil-*/`)
+7. `DESIGN-SYSTEM.md` at project root
+8. `DESIGN-PLAN.md` at project root (optional — only for full-site projects)
+9. `DISCOVERIES.md` at project root (optional — user-maintained)
 
-**If anything is missing:** do not auto-install. Tell the user which pieces are missing and ask them to run the Fish setup script (`~/.fish/scripts/setup-design-system.sh`, or re-run the install one-liner from the Fish README). Pause.
+**If anything in steps 1, 4–7 is missing:** do not auto-install. Tell the user which pieces are missing and ask them to run the Fish setup script (`~/.fish/scripts/setup-design-system.sh`, or re-run the install one-liner from the Fish README). Pause.
 
-**If everything is present:** print a one-line status — "UI Workflow ready. shadcn + Pro Max + Emil present. DESIGN-SYSTEM.md loaded." Then continue.
+**If step 2 fails (not registered anywhere):** tell the user the shadcn MCP is not registered in any config. Ask them to run the Fish setup script and pick an install target (project / user / desktop / all). Pause.
+
+**If step 2 passes but step 3 fails (registered but not accessible in this runtime):** print this warning and pause:
+
+> ⚠️ **shadcn MCP is registered on disk but not accessible in this runtime.**
+>
+> Most likely cause: the MCP is in a config that the current runtime doesn't load. Common pairs:
+> - Registered in `<repo>/.mcp.json` → only loads in Claude Code CLI run from this repo. Invisible to Cowork / Desktop.
+> - Registered in Desktop config → only loads in Cowork / Desktop app. Invisible to `claude` CLI.
+>
+> Remediation (pick one):
+> - **Switch runtime:** if you have Claude Code CLI running from the repo, continue there.
+> - **Add to the current runtime's config:** re-run `bash ~/.fish/scripts/setup-design-system.sh` from the project and pick install target `[a]ll` (or `[d]esktop` / `[u]ser` depending on where you're running).
+>
+> Without shadcn MCP I cannot search registries. I can still audit existing code, edit files, and apply motion refinements — but Phase 3 Step 3 (registry search) is offline.
+>
+> Proceed anyway, with degraded capability? (yes / no / abort)
+
+**If step 3 passes for shadcn MCP, also sanity-check any registry-specific MCPs you expect** (for example, `mcp__magicui__*` and `mcp__cultui__*` if those registries are in `components.json`). If any are registered but not accessible, print a single yellow line — do NOT pause. Registry-specific MCPs are nice-to-haves; the base shadcn MCP already covers search across all registered registries.
+
+**If everything is present and accessible:** print a one-line status — "UI Workflow ready. shadcn MCP live. Pro Max + Emil present. DESIGN-SYSTEM.md loaded." Then continue.
 
 ## Phase 2 — Request classification
 

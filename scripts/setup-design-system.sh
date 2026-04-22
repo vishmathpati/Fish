@@ -17,7 +17,10 @@
 #      config/registries.json.
 #   5. Merges opted-in registries into components.json
 #   6. Copies the ui-workflow skill + agent + templates into .claude/
-#   7. Writes .mcp.json entries for shadcn MCP and any opted-in MCP servers
+#   7. Writes MCP config entries for shadcn MCP and any opted-in MCP servers.
+#      User picks target(s) at install time: project (.mcp.json) /
+#      user (~/.claude.json) / desktop (claude_desktop_config.json) / all.
+#      Each config is independent — installing to one does NOT cover the others.
 #   8. Copies template files to the project root (DESIGN-SYSTEM.md is left
 #      as .template.md so UI/UX Pro Max can fill it in on first real use)
 #   9. Prints a status table + "next steps"
@@ -229,37 +232,102 @@ for tpl in DESIGN-SYSTEM.template.md DESIGN-PLAN.template.md DISCOVERIES.templat
   fi
 done
 
-# ---------- .mcp.json ---------------------------------------------------------
+# ---------- MCP configuration (v0.2 — multi-target) ---------------------------
 head1 "6. MCP configuration"
 
-MCP_FILE=".mcp.json"
-if [ ! -f "$MCP_FILE" ]; then
-  echo '{"mcpServers": {}}' > "$MCP_FILE"
-  ok "Created $MCP_FILE"
+# MCPs live in different config files depending on the Claude runtime.
+# None of these share state — installing to one does NOT cover the others.
+#   p = project scope      — <repo>/.mcp.json         (claude CLI inside this repo)
+#   u = user/global scope  — ~/.claude.json           (claude CLI anywhere)
+#   d = desktop / Cowork   — claude_desktop_config    (Desktop app + Cowork)
+case "$(uname -s)" in
+  Darwin) DESKTOP_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json" ;;
+  Linux)  DESKTOP_CONFIG="$HOME/.config/Claude/claude_desktop_config.json" ;;
+  *)      DESKTOP_CONFIG="" ;;
+esac
+USER_CONFIG="$HOME/.claude.json"
+PROJECT_CONFIG="$PROJECT_ROOT/.mcp.json"
+
+say "  MCPs can be installed into multiple Claude runtimes. They do NOT share config."
+say ""
+say "    ${BOLD}p${RESET}  project scope        ${DIM}${PROJECT_CONFIG}${RESET}"
+say "       ${DIM}loaded when: 'claude' CLI is run inside this repo${RESET}"
+say "    ${BOLD}u${RESET}  user/global scope    ${DIM}${USER_CONFIG}${RESET}"
+say "       ${DIM}loaded when: 'claude' CLI is run anywhere on this machine${RESET}"
+if [ -n "$DESKTOP_CONFIG" ]; then
+  say "    ${BOLD}d${RESET}  desktop + Cowork     ${DIM}${DESKTOP_CONFIG}${RESET}"
+  say "       ${DIM}loaded when: Claude Desktop app or Cowork session${RESET}"
+fi
+say ""
+say "  Install targets: [${BOLD}p${RESET}]roject only · project+[${BOLD}u${RESET}]ser · project+[${BOLD}d${RESET}]esktop · [${BOLD}a${RESET}]ll · [${BOLD}s${RESET}]kip"
+printf '  %s?%s Install targets [p]: ' "$BLUE" "$RESET"
+read -r TARGETS </dev/tty
+TARGETS="${TARGETS:-p}"
+
+WRITE_PROJECT=0; WRITE_USER=0; WRITE_DESKTOP=0
+case "$TARGETS" in
+  s|S|skip)            miss "MCP registration skipped. Re-run this script to add later." ;;
+  p|P|project)         WRITE_PROJECT=1 ;;
+  u|U|user|pu|up)      WRITE_PROJECT=1; WRITE_USER=1 ;;
+  d|D|desktop|pd|dp)   WRITE_PROJECT=1; WRITE_DESKTOP=1 ;;
+  a|A|all)             WRITE_PROJECT=1; WRITE_USER=1; WRITE_DESKTOP=1 ;;
+  *) warn "Unknown choice '$TARGETS' — defaulting to project only."; WRITE_PROJECT=1 ;;
+esac
+
+if [ "$WRITE_DESKTOP" = "1" ] && [ -z "$DESKTOP_CONFIG" ]; then
+  warn "Desktop config path unknown on this OS — skipping desktop target."
+  WRITE_DESKTOP=0
 fi
 
-# shadcn MCP — always add
-TMP=$(mktemp)
-jq '.mcpServers["shadcn"] = (.mcpServers["shadcn"] // {"command":"npx","args":["--yes","shadcn@latest","mcp"]})' \
-   "$MCP_FILE" > "$TMP" && mv "$TMP" "$MCP_FILE"
-ok "shadcn MCP registered"
-
-# MCP for any selected registry that ships one (e.g. Magic UI, Cult UI).
-# Bash 3.2 treats `${arr[@]}` on an empty array as an unbound-variable error
-# under `set -u`, so guard with a length check.
-for key in ${SELECTED_KEYS[@]+"${SELECTED_KEYS[@]}"}; do
-  HAS_MCP=$(jq -r --arg k "$key" '.optional[$k].mcp // empty' "$REGISTRIES_CONFIG")
-  if [ -n "$HAS_MCP" ]; then
-    CMD=$(jq -r --arg k "$key" '.optional[$k].mcp.command' "$REGISTRIES_CONFIG")
-    ARGS=$(jq -c --arg k "$key" '.optional[$k].mcp.args'   "$REGISTRIES_CONFIG")
-    SERVER_KEY="${key#@}"
-    TMP=$(mktemp)
-    jq --arg s "$SERVER_KEY" --arg c "$CMD" --argjson a "$ARGS" \
-       '.mcpServers[$s] = {"command":$c,"args":$a}' \
-       "$MCP_FILE" > "$TMP" && mv "$TMP" "$MCP_FILE"
-    ok "$key MCP registered"
+# Helper — merge one MCP entry into a target JSON file. Non-clobbering:
+# if .mcpServers[$key] already exists, leave it alone (respects user edits).
+# Creates the file and parent dir if needed.
+merge_mcp() {
+  local file="$1" key="$2" cmd="$3" args_json="$4"
+  local dir; dir="$(dirname "$file")"
+  [ -d "$dir" ] || mkdir -p "$dir"
+  if [ ! -f "$file" ]; then
+    echo '{"mcpServers": {}}' > "$file"
   fi
-done
+  local TMP; TMP="$(mktemp)"
+  jq --arg k "$key" --arg c "$cmd" --argjson a "$args_json" \
+     '.mcpServers //= {} | .mcpServers[$k] = (.mcpServers[$k] // {"command":$c,"args":$a})' \
+     "$file" > "$TMP" && mv "$TMP" "$file"
+}
+
+# register_mcp <key> <command> <args_json>  — write to every selected target
+register_mcp() {
+  local key="$1" cmd="$2" args_json="$3"
+  local wrote=()
+  if [ "$WRITE_PROJECT" = "1" ]; then merge_mcp "$PROJECT_CONFIG" "$key" "$cmd" "$args_json"; wrote+=("project"); fi
+  if [ "$WRITE_USER"    = "1" ]; then merge_mcp "$USER_CONFIG"    "$key" "$cmd" "$args_json"; wrote+=("user"); fi
+  if [ "$WRITE_DESKTOP" = "1" ]; then merge_mcp "$DESKTOP_CONFIG" "$key" "$cmd" "$args_json"; wrote+=("desktop"); fi
+  if [ ${#wrote[@]} -gt 0 ]; then
+    local joined; joined="$(IFS=,; echo "${wrote[*]}")"
+    ok "$key MCP registered (${joined})"
+  fi
+}
+
+if [ "$WRITE_PROJECT" = "1" ] || [ "$WRITE_USER" = "1" ] || [ "$WRITE_DESKTOP" = "1" ]; then
+  # shadcn MCP — always add (required by ui-workflow skill)
+  register_mcp "shadcn" "npx" '["--yes","shadcn@latest","mcp"]'
+
+  # MCP for any selected registry that ships one (e.g. Magic UI, Cult UI)
+  for key in ${SELECTED_KEYS[@]+"${SELECTED_KEYS[@]}"}; do
+    HAS_MCP=$(jq -r --arg k "$key" '.optional[$k].mcp // empty' "$REGISTRIES_CONFIG")
+    if [ -n "$HAS_MCP" ]; then
+      CMD=$(jq  -r --arg k "$key" '.optional[$k].mcp.command' "$REGISTRIES_CONFIG")
+      ARGS=$(jq -c --arg k "$key" '.optional[$k].mcp.args'    "$REGISTRIES_CONFIG")
+      SERVER_KEY="${key#@}"
+      register_mcp "$SERVER_KEY" "$CMD" "$ARGS"
+    fi
+  done
+
+  if [ "$WRITE_DESKTOP" = "1" ]; then
+    say ""
+    warn "Restart Claude Desktop app for desktop-scope MCPs to load."
+  fi
+fi
 
 # ---------- summary ------------------------------------------------------------
 head1 "7. Status"
