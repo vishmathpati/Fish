@@ -47,7 +47,11 @@ ok()    { printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$*"; }
 warn()  { printf '  %s!%s %s\n' "$YELLOW" "$RESET" "$*"; }
 miss()  { printf '  %s·%s %s\n' "$DIM" "$RESET" "$*"; }
 fail()  { printf '  %s✗%s %s\n' "$RED" "$RESET" "$*"; exit 1; }
-ask()   { local q="$1"; local d="${2:-n}"; local a; printf '  %s?%s %s [%s/%s] ' "$BLUE" "$RESET" "$q" "$([ "$d" = "y" ] && echo Y || echo y)" "$([ "$d" = "y" ] && echo n || echo N)"; read -r a; a="${a:-$d}"; [[ "$a" =~ ^[Yy]$ ]]; }
+# Read from /dev/tty explicitly so prompts inside `while read` loops don't
+# steal their input from the loop's stdin. (The registry opt-in loop feeds
+# a heredoc of registry keys into stdin; without /dev/tty the prompts
+# silently consume the next key as their answer.)
+ask()   { local q="$1"; local d="${2:-n}"; local a; printf '  %s?%s %s [%s/%s] ' "$BLUE" "$RESET" "$q" "$([ "$d" = "y" ] && echo Y || echo y)" "$([ "$d" = "y" ] && echo n || echo N)"; read -r a </dev/tty; a="${a:-$d}"; [[ "$a" =~ ^[Yy]$ ]]; }
 
 # ---------- tooling detection -------------------------------------------------
 head1 "1. Detect project"
@@ -240,8 +244,10 @@ jq '.mcpServers["shadcn"] = (.mcpServers["shadcn"] // {"command":"npx","args":["
    "$MCP_FILE" > "$TMP" && mv "$TMP" "$MCP_FILE"
 ok "shadcn MCP registered"
 
-# MCP for any selected registry that ships one (only Magic UI currently)
-for key in "${SELECTED_REGISTRIES[@]}"; do
+# MCP for any selected registry that ships one (e.g. Magic UI, Cult UI).
+# Bash 3.2 treats `${arr[@]}` on an empty array as an unbound-variable error
+# under `set -u`, so guard with a length check.
+for key in ${SELECTED_KEYS[@]+"${SELECTED_KEYS[@]}"}; do
   HAS_MCP=$(jq -r --arg k "$key" '.optional[$k].mcp // empty' "$REGISTRIES_CONFIG")
   if [ -n "$HAS_MCP" ]; then
     CMD=$(jq -r --arg k "$key" '.optional[$k].mcp.command' "$REGISTRIES_CONFIG")
@@ -264,8 +270,10 @@ printf '  %-35s %s\n' "Framework"            "$FRAMEWORK"
 printf '  %-35s %s\n' "components.json"      "$([ "$HAS_COMPONENTS_JSON" = "1" ] && echo yes || echo no)"
 printf '  %-35s %s\n' "UI/UX Pro Max"        "$([ "$HAS_PRO_MAX" = "1" ] && echo yes || echo no)"
 printf '  %-35s %s\n' "Emil motion skill"    "$([ "$HAS_EMIL" = "1" ] && echo yes || echo no)"
-printf '  %-35s %s\n' "Registries selected"  "${#SELECTED_REGISTRIES[@]}"
-[ ${#SELECTED_REGISTRIES[@]} -gt 0 ] && printf '  %-35s %s\n' "  - namespaces"          "${SELECTED_REGISTRIES[*]}"
+SELECTED_COUNT=${#SELECTED_KEYS[@]+${#SELECTED_KEYS[@]}}
+SELECTED_COUNT=${SELECTED_COUNT:-0}
+printf '  %-35s %s\n' "Registries selected"  "$SELECTED_COUNT"
+[ "$SELECTED_COUNT" -gt 0 ] && printf '  %-35s %s\n' "  - namespaces"          "${SELECTED_KEYS[*]}"
 printf '  %-35s %s\n' "ui-workflow skill"    ".claude/skills/ui-workflow/SKILL.md"
 printf '  %-35s %s\n' "design-review agent"  ".claude/agents/design-review.md"
 printf '  %-35s %s\n' "Templates placed"     "DESIGN-SYSTEM.template.md, DESIGN-PLAN.template.md, DISCOVERIES.template.md"
