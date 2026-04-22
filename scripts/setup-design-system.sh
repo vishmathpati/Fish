@@ -143,9 +143,11 @@ head1 "4. Optional registries (opt-in)"
 say "  None are added by default. Pick only what this project actually needs."
 say ""
 
-# Read opt-in candidates from config and present each
+# Read opt-in candidates from config and present each.
+# Filter out $comment keys — the JSON uses "$comment" fields for inline docs
+# and those don't point at registry objects.
 # shellcheck disable=SC2016
-OPT_KEYS=$(jq -r '.optional | keys[]' "$REGISTRIES_CONFIG")
+OPT_KEYS=$(jq -r '.optional | keys[] | select(startswith("$") | not)' "$REGISTRIES_CONFIG")
 
 # NOTE: macOS ships Bash 3.2 — associative arrays (declare -A) don't exist.
 # We use two parallel indexed arrays instead. SELECTED_KEYS[i] and
