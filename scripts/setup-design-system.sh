@@ -124,14 +124,13 @@ if [ "$HAS_COMPONENTS_JSON" = "0" ]; then
 fi
 
 if [ "$HAS_PRO_MAX" = "0" ]; then
-  say ""
-  say "  ${BOLD}UI/UX Pro Max${RESET} is a Claude Code skill (not an npm package)."
-  say "  Install it with the Claude Code CLI, then re-run this script:"
-  say ""
-  say "    ${BOLD}claude skills add nextlevelbuilder/ui-ux-pro-max-skill${RESET}"
-  say ""
-  say "  Or install manually: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill"
-  warn "Pro Max not installed — ui-workflow will refuse to generate UI without it. Install it, then re-run."
+  if ask "Install UI/UX Pro Max via Claude Code CLI?" y; then
+    claude skills add nextlevelbuilder/ui-ux-pro-max-skill || warn "Pro Max install returned non-zero — install manually: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill"
+    HAS_PRO_MAX=1
+    ok "UI/UX Pro Max installed"
+  else
+    warn "Skipped Pro Max — ui-workflow will refuse to generate UI without it."
+  fi
 fi
 
 if [ "$HAS_EMIL" = "0" ]; then
