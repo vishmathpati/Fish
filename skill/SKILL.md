@@ -206,6 +206,41 @@ End with verdict: **PASS** / **WARN** / **FAIL**. If FAIL, offer to fix specific
 3. Report only. Do not rewrite.
 4. If the user says "fix it" after the report, route into Phase 3 Type A/B/C.
 
+## Registry recommendation (trigger: "recommend registries" / "which registries should I use" / end of design system init)
+
+Run this automatically after `DESIGN-SYSTEM.md` is approved — and any time the user asks explicitly.
+
+1. Read `DESIGN-SYSTEM.md`. Extract: tone, aesthetic references, forbidden patterns, industry.
+2. Read `~/.fish/config/registries.json` (or `$WORKFLOW_ROOT/config/registries.json`). Load the `optional` block.
+3. For each registry, evaluate fit against the design system. Assign a preliminary verdict:
+   - **Recommended** — aesthetic aligns, components will be useful for this project type
+   - **Selective** — has some useful components but also many that conflict; note which categories to use
+   - **Skip** — design philosophy conflicts with the declared aesthetic (e.g. glassmorphism registry for a minimal app)
+4. Present a recommendation table in this format:
+
+```
+Registry recommendations for: [PROJECT_NAME]
+Based on: DESIGN-SYSTEM.md (tone: X, aesthetic: Y, forbidden: Z)
+
+  ✅ @shadcn        — Recommended. Neutral baseline, always include.
+  ✅ @reui          — Recommended. Same philosophy as shadcn, strong data/form patterns.
+  ⚠️  @smoothui     — Selective. Motion components fit; skip text animations and background effects.
+  ⚠️  @magicui      — Selective. File tree, code comparison, dot/grid patterns fit; skip all text animations and backgrounds.
+  ❌ @aceternity    — Skip. Heavy parallax and glassmorphism conflict with your minimal aesthetic.
+  ❌ @efferd        — Skip. Marketing sections only, no individual primitives.
+  [etc.]
+
+Add recommended registries to components.json? (yes / review each / skip)
+```
+
+5. On "yes": merge all Recommended registries into `components.json` automatically. For Selective registries, ask one by one. Skip registries are not added.
+6. For any registry that ships an MCP server (Magic UI, Cult UI): after adding to `components.json`, ask "Also register [registry] MCP?" and run the registration if yes.
+7. Confirm final `components.json` registries block to the user.
+
+**Never run registry recommendation before `DESIGN-SYSTEM.md` exists.** If missing, say "Initialize the design system first (`initialize design system for this project`), then I can recommend registries."
+
+---
+
 ## Full-site initialization
 
 Trigger phrases: "initialize <project>", "design the whole site", "set up the design for <project>", "plan the UI for all features".
@@ -213,12 +248,13 @@ Trigger phrases: "initialize <project>", "design the whole site", "set up the de
 Flow:
 
 1. Check for `DESIGN-SYSTEM.md`. If missing, invoke Pro Max's generator — it asks brand/audience/industry/tone questions, writes the file. Present for user approval before continuing.
-2. Check for `DESIGN-PLAN.md`. If missing, invoke Pro Max's site-analysis flow:
+2. After `DESIGN-SYSTEM.md` is approved, run the Registry recommendation flow above. Wait for user to confirm registries before proceeding.
+3. Check for `DESIGN-PLAN.md`. If missing, invoke Pro Max's site-analysis flow:
    - Ask for feature/page list (or extract from `README.md` / `CLAUDE.md` if present)
    - Ask about hierarchy, main CTAs, user journey, industry conventions
    - Pro Max writes `DESIGN-PLAN.md` with one section per page/feature, each listing requirements
-3. Present `DESIGN-PLAN.md` to user for approval. Wait.
-4. Once approved, walk through features one at a time. For each: run Phase 3 Steps 3-7 (shadcn search → approval → execute → review). Never batch-approve or batch-generate. One feature, one approval, one generation, one review.
+4. Present `DESIGN-PLAN.md` to user for approval. Wait.
+5. Once approved, walk through features one at a time. For each: run Phase 3 Steps 3-7 (shadcn search → approval → execute → review). Never batch-approve or batch-generate. One feature, one approval, one generation, one review.
 
 ## Maintenance commands
 
@@ -227,6 +263,7 @@ Recognize these phrases and route accordingly:
 - "refresh design system skill" / "re-check setup" → re-run Phase 1 silently, report what's present vs missing
 - "update design system" → open `DESIGN-SYSTEM.md` for edit via Pro Max refinement (ask what to change, Pro Max updates, user approves)
 - "update design plan" → same for `DESIGN-PLAN.md`
+- "recommend registries" / "which registries should I use" → run Registry recommendation flow (requires DESIGN-SYSTEM.md)
 - "add registry <namespace>" → append to `components.json` `registries` block, confirm URL, verify by running a test search
 - "remove registry <namespace>" → remove from `components.json`
 - "log a discovery" → prompt for entry shape, append to `DISCOVERIES.md`

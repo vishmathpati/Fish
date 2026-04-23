@@ -144,72 +144,12 @@ if [ "$HAS_EMIL" = "0" ]; then
 fi
 
 # ---------- registries (opt-in) -----------------------------------------------
-head1 "4. Optional registries (opt-in)"
-
-say "  None are added by default. Pick only what this project actually needs."
-say ""
-
-# Read opt-in candidates from config and present each.
-# Filter out $comment keys — the JSON uses "$comment" fields for inline docs
-# and those don't point at registry objects.
-# shellcheck disable=SC2016
-OPT_KEYS=$(jq -r '.optional | keys[] | select(startswith("$") | not)' "$REGISTRIES_CONFIG")
-
-# NOTE: macOS ships Bash 3.2 — associative arrays (declare -A) don't exist.
-# We use two parallel indexed arrays instead. SELECTED_KEYS[i] and
-# SELECTED_URLS[i] describe the same registry.
-SELECTED_KEYS=()
-SELECTED_URLS=()
-while IFS= read -r key; do
-  name=$(jq   -r --arg k "$key" '.optional[$k].name'            "$REGISTRIES_CONFIG")
-  url=$(jq    -r --arg k "$key" '.optional[$k].url'             "$REGISTRIES_CONFIG")
-  best=$(jq   -r --arg k "$key" '.optional[$k].best_for'        "$REGISTRIES_CONFIG")
-  src=$(jq    -r --arg k "$key" '.optional[$k].source // empty' "$REGISTRIES_CONFIG")
-  notes=$(jq  -r --arg k "$key" '.optional[$k].notes // empty'  "$REGISTRIES_CONFIG")
-  status=$(jq -r --arg k "$key" '.optional[$k].status // empty' "$REGISTRIES_CONFIG")
-
-  say ""
-  say "  ${BOLD}${key}${RESET} — ${name}"
-  say "    ${DIM}${best}${RESET}"
-  [ -n "$src" ] && say "    ${DIM}docs: ${src}${RESET}"
-
-  # Non-registry entries (e.g. Tremor = npm-only) — show a notice, never merge
-  if [ "$status" = "no_shadcn_registry" ]; then
-    say "    ${YELLOW}Note:${RESET} ${notes}"
-    if ask "    Open docs reference only (won't be added to components.json)?" n; then
-      say "    ${DIM}Acknowledged — ${name} is available via its own install path, not through shadcn CLI.${RESET}"
-    fi
-    continue
-  fi
-
-  if ask "    Add ${key}?" n; then
-    [ -n "$notes" ] && say "    ${DIM}${notes}${RESET}"
-    SELECTED_KEYS+=("$key")
-    SELECTED_URLS+=("$url")
-  fi
-done <<<"$OPT_KEYS"
-
-# Merge selected registries into components.json
-if [ ${#SELECTED_KEYS[@]} -gt 0 ]; then
-  say ""
-  ok "Merging ${#SELECTED_KEYS[@]} registries into components.json"
-  TMP=$(mktemp)
-  cp components.json "$TMP"
-  for i in "${!SELECTED_KEYS[@]}"; do
-    key="${SELECTED_KEYS[$i]}"
-    url="${SELECTED_URLS[$i]}"
-    jq --arg k "$key" --arg u "$url" \
-       '.registries = (.registries // {}) | .registries[$k] = $u' \
-       "$TMP" > "$TMP.new" && mv "$TMP.new" "$TMP"
-  done
-  mv "$TMP" components.json
-  ok "components.json updated"
-else
-  miss "No registries selected. You can add later with: 'add registry <namespace>' (ui-workflow maintenance command)."
-fi
-
 # ---------- Claude assets ------------------------------------------------------
-head1 "5. Install ui-workflow skill + agent + templates"
+# Registries are selected AFTER the design system is initialized, not here.
+# Once DESIGN-SYSTEM.md exists, the ui-workflow skill reads it and recommends
+# which registries fit the project's aesthetic — with reasoning. The user picks
+# from an informed position rather than guessing upfront.
+head1 "4. Install ui-workflow skill + agent + templates"
 
 mkdir -p .claude/skills/ui-workflow
 mkdir -p .claude/agents
@@ -323,16 +263,9 @@ if [ "$WRITE_PROJECT" = "1" ] || [ "$WRITE_USER" = "1" ] || [ "$WRITE_DESKTOP" =
   # shadcn MCP — always add (required by ui-workflow skill)
   register_mcp "shadcn" "npx" '["--yes","shadcn@latest","mcp"]'
 
-  # MCP for any selected registry that ships one (e.g. Magic UI, Cult UI)
-  for key in ${SELECTED_KEYS[@]+"${SELECTED_KEYS[@]}"}; do
-    HAS_MCP=$(jq -r --arg k "$key" '.optional[$k].mcp // empty' "$REGISTRIES_CONFIG")
-    if [ -n "$HAS_MCP" ]; then
-      CMD=$(jq  -r --arg k "$key" '.optional[$k].mcp.command' "$REGISTRIES_CONFIG")
-      ARGS=$(jq -c --arg k "$key" '.optional[$k].mcp.args'    "$REGISTRIES_CONFIG")
-      SERVER_KEY="${key#@}"
-      register_mcp "$SERVER_KEY" "$CMD" "$ARGS"
-    fi
-  done
+  # Registry-specific MCPs (Magic UI, Cult UI, etc.) are registered later —
+  # after 'initialize design system' in Claude Code. The skill recommends
+  # which registries fit the project and handles their MCP registration then.
 
   if [ "$WRITE_DESKTOP" = "1" ]; then
     say ""
@@ -349,32 +282,46 @@ printf '  %-35s %s\n' "Framework"            "$FRAMEWORK"
 printf '  %-35s %s\n' "components.json"      "$([ "$HAS_COMPONENTS_JSON" = "1" ] && echo yes || echo no)"
 printf '  %-35s %s\n' "UI/UX Pro Max"        "$([ "$HAS_PRO_MAX" = "1" ] && echo yes || echo no)"
 printf '  %-35s %s\n' "Emil motion skill"    "$([ "$HAS_EMIL" = "1" ] && echo yes || echo no)"
-printf '  %-35s %s\n' "Registries selected"  "${#SELECTED_KEYS[@]}"
-[ "${#SELECTED_KEYS[@]}" -gt 0 ] && printf '  %-35s %s\n' "  - namespaces"          "${SELECTED_KEYS[*]}"
+printf '  %-35s %s\n' "Registries"           "selected after design system init (see step 3 below)"
 printf '  %-35s %s\n' "ui-workflow skill"    ".claude/skills/ui-workflow/SKILL.md"
 printf '  %-35s %s\n' "design-review agent"  ".claude/agents/design-review.md"
 printf '  %-35s %s\n' "Templates placed"     "DESIGN-SYSTEM.template.md, DESIGN-PLAN.template.md, DISCOVERIES.template.md"
+printf '  %-35s %s\n' "Design preview"       "app/design-preview/page.tsx → visit /design-preview"
 
 head1 "Next steps"
 
 cat <<'EOS'
   1. Open Claude Code in this project. The ui-workflow skill is now active.
+
   2. Say:  "initialize design system for this project"
-     → UI/UX Pro Max will ask brand/audience/tone questions, then write
-       DESIGN-SYSTEM.md. Review and approve.
-  3. For a full-site plan (multi-page):
+     → UI/UX Pro Max asks brand/audience/tone questions, writes DESIGN-SYSTEM.md.
+       Review and approve.
+
+  3. Say:  "recommend registries for this project"
+     → ui-workflow reads your DESIGN-SYSTEM.md and recommends which component
+       registries fit your aesthetic — with reasoning for each. You pick.
+       Selected registries are merged into components.json automatically.
+
+  4. Visit /design-preview in your running dev server.
+     → See all your design tokens and components rendered live. Use the
+       floating toolbar to tune primary color, radius, dark/light, and
+       typography before writing a single real feature.
+
+  5. For a full-site plan (multi-page):
      Say:  "design the whole site" or "initialize <project-name>"
      → Pro Max writes DESIGN-PLAN.md. Review and approve.
-  4. For any single component/page after that, just describe what you want.
+
+  6. For any component or page, just describe what you want.
      ui-workflow will: classify → Pro Max plans → shadcn MCP searches →
-     approval gate → execute → internal review.
+     approval gate → execute → compliance review.
 
   Maintenance commands (inside Claude Code):
     - "refresh design system skill"    (re-checks setup)
     - "update design system"           (edit DESIGN-SYSTEM.md via Pro Max)
-    - "add registry <namespace>"       (opt into another registry)
+    - "add registry <namespace>"       (opt into another registry anytime)
     - "log a discovery"                (save a one-off pattern to DISCOVERIES.md)
     - "audit file <path>"              (compliance review only)
+    - "show design preview"            (reopen the live token playground)
 
   Done.
 EOS

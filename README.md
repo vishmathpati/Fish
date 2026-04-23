@@ -177,10 +177,18 @@ Plus two config files Fish merges into (never overwrites):
 ## Talking to it (after setup)
 
 You never invoke the skills directly. You just describe what you want and
-`ui-workflow` handles classification and routing:
+`ui-workflow` handles classification and routing.
 
-- **"Initialize design system for this project"** → Pro Max asks brand/tone questions and writes `DESIGN-SYSTEM.md`.
-- **"Design the whole site"** → Pro Max writes `DESIGN-PLAN.md` after reading your `README.md` or asking for the feature list.
+### The correct first-run order
+
+1. **"Initialize design system for this project"** → Pro Max asks brand/audience/tone questions, writes `DESIGN-SYSTEM.md`. Review and approve.
+2. **"Recommend registries for this project"** → `ui-workflow` reads your `DESIGN-SYSTEM.md` and recommends which component registries fit your aesthetic — with a reason for each. You pick. No more blind guessing at setup time.
+3. **Visit `/design-preview`** → see all your tokens and components live. Tune color, radius, dark/light, and typography with the floating toolbar before writing a single feature.
+4. **"Design the whole site"** → Pro Max writes `DESIGN-PLAN.md` after reading your `README.md` or asking for the feature list.
+5. **Describe what you want** → `ui-workflow` classifies, plans, searches, gates, executes, and reviews. Every time.
+
+### Day-to-day usage
+
 - **"Add a pricing page with three tiers"** → Type C flow: Pro Max plans, shadcn searches, you approve, code gets written and reviewed.
 - **"Animate the modal entrance"** → Type D flow: goes straight to Emil.
 - **"Audit file src/components/header.tsx"** → Type E flow: report only.
@@ -192,10 +200,12 @@ You never invoke the skills directly. You just describe what you want and
 | `refresh design system skill` | Re-checks setup |
 | `update design system` | Pro Max helps edit `DESIGN-SYSTEM.md` |
 | `update design plan` | Pro Max helps edit `DESIGN-PLAN.md` |
-| `add registry <namespace>` | Opts into another registry |
+| `recommend registries` | Re-run registry recommendation against current `DESIGN-SYSTEM.md` |
+| `add registry <namespace>` | Opts into a specific registry manually |
 | `remove registry <namespace>` | Removes a registry |
 | `log a discovery` | Appends to `DISCOVERIES.md` |
 | `audit file <path>` | Compliance review only |
+| `show design preview` | Reopens the live token playground at `/design-preview` |
 
 ---
 
