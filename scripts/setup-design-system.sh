@@ -124,19 +124,19 @@ if [ "$HAS_COMPONENTS_JSON" = "0" ]; then
 fi
 
 if [ "$HAS_PRO_MAX" = "0" ]; then
-  if ask "Install UI/UX Pro Max globally via npm? (uipro-cli)" y; then
-    npm install -g uipro-cli || fail "Failed to install uipro-cli."
-    uipro init --ai claude || warn "uipro init returned non-zero — check the skill files under ~/.claude/skills/"
-    HAS_PRO_MAX=1
-    ok "UI/UX Pro Max installed"
-  else
-    warn "Skipped Pro Max — the ui-workflow skill will refuse to generate UI without it."
-  fi
+  say ""
+  say "  ${BOLD}UI/UX Pro Max${RESET} is a Claude Code skill (not an npm package)."
+  say "  Install it with the Claude Code CLI, then re-run this script:"
+  say ""
+  say "    ${BOLD}claude skills add nextlevelbuilder/ui-ux-pro-max-skill${RESET}"
+  say ""
+  say "  Or install manually: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill"
+  warn "Pro Max not installed — ui-workflow will refuse to generate UI without it. Install it, then re-run."
 fi
 
 if [ "$HAS_EMIL" = "0" ]; then
-  if ask "Install Emil Kowalski motion skill?" y; then
-    $PMX skills add emilkowalski/skill || warn "Emil install command returned non-zero — verify ~/.claude/skills/"
+  if ask "Install Emil Kowalski motion skill via Claude Code CLI?" y; then
+    claude skills add emilkowalski/skill || warn "Emil install returned non-zero — verify ~/.claude/skills/ or .agents/skills/"
     HAS_EMIL=1
     ok "Emil motion skill installed"
   else
