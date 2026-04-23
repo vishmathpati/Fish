@@ -231,6 +231,7 @@ Recognize these phrases and route accordingly:
 - "remove registry <namespace>" → remove from `components.json`
 - "log a discovery" → prompt for entry shape, append to `DISCOVERIES.md`
 - "audit file <path>" → Type E flow
+- "show design preview" / "open design preview" → remind user to visit `/design-preview` in the running dev server. If `app/design-preview/page.tsx` is missing, offer to copy it from `~/.fish/templates/design-preview.template.tsx`.
 
 ## Decision reference
 

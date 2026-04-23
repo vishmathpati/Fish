@@ -219,6 +219,18 @@ ok ".claude/skills/ui-workflow/SKILL.md"
 cp "$TEMPLATES_DIR/design-review.agent.md" .claude/agents/design-review.md
 ok ".claude/agents/design-review.md"
 
+# Design preview page — copy to app/design-preview/page.tsx
+# Gives an instant live preview of every design token + component before
+# writing real features. Route: /design-preview. Safe to delete afterwards.
+PREVIEW_DEST="app/design-preview/page.tsx"
+if [ -f "$PREVIEW_DEST" ]; then
+  miss "$PREVIEW_DEST already exists — leaving untouched"
+else
+  mkdir -p "app/design-preview"
+  cp "$TEMPLATES_DIR/design-preview.template.tsx" "$PREVIEW_DEST"
+  ok "$PREVIEW_DEST (visit /design-preview after starting dev server)"
+fi
+
 # Templates go to project root as .template.md — UI/UX Pro Max fills them on
 # first real use (don't overwrite an already-populated DESIGN-SYSTEM.md).
 for tpl in DESIGN-SYSTEM.template.md DESIGN-PLAN.template.md DISCOVERIES.template.md; do
